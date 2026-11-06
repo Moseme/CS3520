@@ -6,13 +6,18 @@
 cannot work without it, because they must save the return address (the address of the next
 instruction) into `rd`. The two-way MemtoReg signal in the Week 7 truth table has no way to do this.
 
-**Step 3 - why `data_mem.addr` holds a value on an `add`.** The address port is wired directly to
-`alu.res`, so it simply shows the ALU result (17). In the first cycle (`addi`, ALU result 0xc) the
-data memory output showed 0x40628e33, the encoding of the instruction stored at 0xc, because code and
-data share one memory. It is harmless because `data_mem.wr_en` is 0, so nothing is written, and the
-write-back mux does not select the memory output (it selects ALURES), so the read data is ignored.
-The cost is time: memory sits in series on every instruction's path, so the clock period must be long
-enough for the slowest instruction (`lw`), and every instruction pays for it.
+**Step 3 - why `data_mem.addr` has a value on an `add`.** The address input of the data memory is
+connected straight to the ALU result. The ALU adds 12 + 5 for the `add`, so 17 appears on the address
+port. It appears for every instruction, even ones that do not use memory.
+
+It is harmless for two reasons. First, `data_mem.wr_en` is 0, so nothing is written to memory. Second,
+the write-back multiplexer picks the ALU result (ALURES), not the memory output, so whatever the memory
+reads is ignored. In the first cycle (`addi`, ALU result 0xc) the data memory output showed 0x40628e33,
+the encoding of the instruction stored at address 0xc, because code and data share one memory.
+
+What it costs is time. The memory sits on the path every instruction takes, and the clock must be slow
+enough for the slowest instruction, which is `lw` (fetch, register read, ALU, memory, write). So `add`
+is held back to the speed of `lw` even though it does not use memory.
 
 **Step 5 - what the design sacrificed.** CPU time = IC x CPI x Tc. IC is the same for any
 implementation of the ISA, and CPI = 1.00 is the best possible, so the cost is in **Tc**. The
@@ -44,6 +49,8 @@ Tc(longest stage), using the component delays from the Week 7 worked exercise.
    an address, and has no connection to the PC.
 
 ## Step 6 - three differences from the Week 6 textbook datapath
+
+(Evidence for each is recorded in `step6-evidence.md`.)
 
 **A. No dedicated branch adder.** The branch (and `jal`) target is computed by the main ALU.
 `alu_op1_src` selects the PC and `alu_op2_src` selects the immediate, so the ALU computes PC + offset.
