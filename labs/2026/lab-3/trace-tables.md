@@ -5,22 +5,22 @@ Register aliases: x5 = t0, x6 = t1, x7 = t2, x10 = a0.
 
 ## Step 3 - `add t2, t0, t1` (PC = 0x00000008, t0 = 12, t1 = 5)
 
-| Element | Port | Value |
-| --- | --- | --- |
-| pc_reg | out | 0x00000008 |
-| pc_4 | out | 0x0000000C |
-| instr_mem | data_out | 0x006283B3 |
-| decode | r1_reg_idx / r2_reg_idx | 5 / 6 |
-| decode | wr_reg_idx | 7 |
-| control | reg_do_write_ctrl | 1 |
-| control | alu_op2_ctrl | REG2 (register, not immediate) |
-| registerFile | r1_out / r2_out | 12 / 5 |
-| alu_op1_src | out | 12 (register rs1, not PC) |
-| alu_op2_src | out | 5 (register rs2, not immediate) |
-| alu | res | 17 |
-| data_mem | wr_en | 0 |
-| reg_wr_src | select / out | ALURES / 17 |
-| pc_src | select / out | 0 / 0x0000000C |
+| Element | Port | Value | Why |
+| --- | --- | --- | --- |
+| pc_reg | out | 0x00000008 | Given: the address of the `add` |
+| pc_4 | out | 0x0000000C | PC + 4, the next instruction |
+| instr_mem | data_out | 0x006283B3 | Given: the 32-bit encoding of `add` |
+| decode | r1_reg_idx / r2_reg_idx | 5 / 6 | The source registers t0 (x5) and t1 (x6) |
+| decode | wr_reg_idx | 7 | Given: the destination t2 (x7) |
+| control | reg_do_write_ctrl | 1 | `add` saves its answer in a register |
+| control | alu_op2_ctrl | REG2 | The second number comes from a register, not an immediate |
+| registerFile | r1_out / r2_out | 12 / 5 | Given: the values of t0 and t1 |
+| alu_op1_src | out | 12 | The first number is a register, not the PC |
+| alu_op2_src | out | 5 | The second number is a register |
+| alu | res | 17 | 12 + 5 |
+| data_mem | wr_en | 0 | `add` does not write to memory |
+| reg_wr_src | select / out | ALURES / 17 | The ALU answer is sent back to the register file |
+| pc_src | select / out | 0 / 0x0000000C | No jump or branch, so the PC goes to PC + 4 |
 
 Hand check of the encoding (R-type: funct7 | rs2 | rs1 | funct3 | rd | opcode):
 `0000000 | 00110 | 00101 | 000 | 00111 | 0110011` = `0000 0000 0110 0010 1000 0011 1011 0011` = **0x006283B3**.
